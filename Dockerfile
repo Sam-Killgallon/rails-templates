@@ -1,5 +1,5 @@
 FROM ruby:3
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
   curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
   echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list && \
   apt-get update && \
@@ -14,4 +14,6 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
     build-essential \
     # For file edits
     vim
-
+RUN gem install rails
+RUN rails new bazbarfoo --skip-webpack-install
+RUn rm -rf bazbarfoo

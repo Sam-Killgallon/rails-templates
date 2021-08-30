@@ -13,4 +13,10 @@ docker run \
   -v ${project_dir}:/projects \
   -w /projects \
   cli_rails_new_helper \
-  /bin/bash -c "gem install rails && rails new ${app_name} -d postgresql --skip-jbuilder -m https://raw.githubusercontent.com/Sam-Killgallon/rails-templates/master/master.rb"
+  /bin/bash -c "gem install rails && rails new ${app_name} -d postgresql --skip-jbuilder -m ./rails-templates/master.rb"
+
+cd ${project_dir}/${app_name}
+chmod a+x docker_scripts/entrypoint.sh
+
+#docker-compose build
+#docker-compose run --rm app yarn add -D @webpack-cli/serve

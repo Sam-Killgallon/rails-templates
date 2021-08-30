@@ -1,3 +1,8 @@
+# TODO:
+# Add socket setup to database.yml to support remote postgres
+# Add CI files
+# Fix issue with the default webpack-dev-server install not working with current version of webpacker
+
 ###### GEMS START ######
 gem_group :development do
   gem "standard"
@@ -25,20 +30,20 @@ file "docker-compose.yml", <<~YAML
   volumes:
     postgres_data:
 
-  services:
-    x-rails-app: &rails-app
-      build: .
-      environment:
-        DATABASE_HOST: postgres
-        DATABASE_USERNAME: postgres
-        DATABASE_PASSWORD: password
-      volumes:
-        - .:/app
-      # To support pry debugging
-      tty: true
-      stdin_open: true
+  x-rails-app: &rails-app
+    build: .
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: password
+    volumes:
+      - .:/app
+    # To support pry debugging
+    tty: true
+    stdin_open: true
 
-    web:
+  services:
+    app:
       <<: *rails-app
       ports:
         - '3000:3000'
@@ -63,13 +68,15 @@ file "docker-compose.yml", <<~YAML
 
 YAML
 
-file "Dockerfile", <<~DOCKERFILE
+file "Dockerfile", <<~DOCKERFILE, mode: 0x744
   FROM ruby:3
-  RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \\
+  RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - && \\
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \\
     echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list && \\
     apt-get update && \\
     apt-get install -yf \\
+      # For copying files into the cache
+      rsync \\
       # For running javascript
       nodejs \\
       # For javascript package installation
@@ -88,12 +95,20 @@ file "Dockerfile", <<~DOCKERFILE
   RUN mkdir -p /app
   WORKDIR /app
 
+  COPY package.json yarn.lock ./
+  RUN --mount=target=/app/node_modules,type=cache \\
+      yarn install
+
   # Copy the Gemfile as well as the Gemfile.lock and install
   # the RubyGems. This is a separate step so the dependencies
   # will be cached unless changes to one of those two files
   # are made.
   COPY Gemfile Gemfile.lock ./
-  RUN gem install bundler && bundle install --frozen && rm /usr/local/bundle/config
+  RUN --mount=target=/bundle-tmp/,type=cache \\
+      gem install bundler && \\
+      bundle install --path /bundle-tmp/ && \\
+      rsync -a /bundle-tmp/ruby/3.0.0/ /usr/local/bundle/ && \\
+      rm /usr/local/bundle/config
 
   # Copy the main application.
   COPY . ./
@@ -102,7 +117,7 @@ file "Dockerfile", <<~DOCKERFILE
   ENTRYPOINT ["docker_scripts/entrypoint.sh"]
 
   # Will bind to PORT environment variable, or 3000 by default
-  CMD ["rails", "server"]
+  CMD ["rails", "server", "-b", "0.0.0.0"]
 DOCKERFILE
 
 file ".dockerignore", <<~DOCKERIGNORE
