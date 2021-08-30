@@ -27,7 +27,7 @@ file "docker-compose.yml", <<~YAML
 
   services:
     x-rails-app: &rails-app
-      build:.
+      build: .
       environment:
         DATABASE_HOST: postgres
         DATABASE_USERNAME: postgres
@@ -65,23 +65,23 @@ YAML
 
 file "Dockerfile", <<~DOCKERFILE
   FROM ruby:3
-  RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list && \
-    apt-get update && \
-    apt-get install -yf \
+  RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \\
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \\
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list && \\
+    apt-get update && \\
+    apt-get install -yf \\
       # For running javascript
-      nodejs \
+      nodejs \\
       # For javascript package installation
-      yarn \
+      yarn \\
       # For the database
-      postgresql-client \
+      postgresql-client \\
       # For building native extensions
-      build-essential \
+      build-essential \\
       # For chromedriver, which gets installed by the 'chromedriver-helper' gem
-      libnss3 \
+      libnss3 \\
       # For browser tests
-      chromium \
+      chromium \\
       # For file edits
       vim
 
