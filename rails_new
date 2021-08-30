@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+
+project_dir=$HOME/projects
+app_name=$1
+
+cd ${project_dir}/rails-templates
+docker build -t cli_rails_new_helper .
+
+docker run \
+  --rm \
+  -v ${project_dir}:/projects \
+  -w /projects \
+  cli_rails_new_helper \
+  /bin/bash -c "gem install rails && rails new ${app_name} -d postgresql --skip-jbuilder -m https://raw.githubusercontent.com/Sam-Killgallon/rails-templates/master/master.rb"
