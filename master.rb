@@ -5,6 +5,7 @@ end
 
 gem_group :development, :test do
   gem "pry-byebug"
+  gem "debug", ">= 1.0.0.beta8"
 end
 
 gem "pry-rails"
@@ -19,26 +20,39 @@ YAML
 
 ###### DOCKER START ######
 file "docker-compose.yml", <<~YAML
-  version: '3.7'
+  version: '3.8'
 
   volumes:
     postgres_data:
 
   services:
-    web:
-      build:
-        context: .
+    x-rails-app: &rails-app
+      build:.
       environment:
         DATABASE_HOST: postgres
         DATABASE_USERNAME: postgres
         DATABASE_PASSWORD: password
-      ports:
-        - '3000:3000'
       volumes:
         - .:/app
+      # To support pry debugging
+      tty: true
+      stdin_open: true
+
+    web:
+      <<: *rails-app
+      ports:
+        - '3000:3000'
       depends_on:
         - postgres
         - webpack_dev_server
+
+    webpack_dev_server:
+      command: ./bin/webpack-dev-server
+      <<: *rails-app
+      #environment:
+        #WEBPACKER_DEV_SERVER_HOST: '0.0.0.0'
+      ports:
+        - '3035:3035'
 
     postgres:
       image: postgres:13.4
@@ -47,15 +61,6 @@ file "docker-compose.yml", <<~YAML
       volumes:
         - postgres_data:/var/lib/postgresql/data
 
-    webpack_dev_server:
-      command: ./bin/webpack-dev-server
-      build: .
-      #environment:
-        #WEBPACKER_DEV_SERVER_HOST: '0.0.0.0'
-      ports:
-        - '3035:3035'
-      volumes:
-        - .:/app
 YAML
 
 file "Dockerfile", <<~DOCKERFILE
